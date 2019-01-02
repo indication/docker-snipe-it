@@ -24,21 +24,23 @@ RUN set -ex \
 RUN cd /tmp;curl -sS https://getcomposer.org/installer | php;mv /tmp/composer.phar /usr/local/bin/composer
 
 #www-data www-data
+RUN chown -R www-data:www-data /var/www/html
 
 ############### DATA VOLUME #################
 VOLUME ["/var/lib/snipeit","/var/spool/snipeitassets"]
 
-RUN chown -R www-data:www-data /var/www/html /var/lib/snipeit /var/spool/snipeitassets
-
 ############ INITIAL APPLICATION SETUP #####################
 WORKDIR /var/www/html
 
-ENTRYPOINT ["./entrypoint_snipe.sh"]
-USER www-data
-RUN git clone -b master https://github.com/snipe/snipe-it ./
-# Get dependencies
-RUN composer install && rm -rf ~/.composer/cache
 # Put entry point to execute
-COPY entrypoint.sh entrypoint_snipe.sh
+COPY entrypoint.sh /var/www/entrypoint_snipe.sh
+COPY entrypoint_root.sh /var/www/entrypoint_root.sh
+RUN chmod ug+s /var/www/entrypoint_root.sh
+
+ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
+USER www-data
+RUN git clone --depth 1 -b master https://github.com/snipe/snipe-it ./
+# Get dependencies
+RUN composer global require hirak/prestissimo && composer install && rm -rf ~/.composer/cache
 
 
