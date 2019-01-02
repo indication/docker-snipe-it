@@ -24,18 +24,21 @@ RUN set -ex \
 RUN cd /tmp;curl -sS https://getcomposer.org/installer | php;mv /tmp/composer.phar /usr/local/bin/composer
 
 #www-data www-data
-RUN chown -R www-data:www-data /var/www/html
+
+############### DATA VOLUME #################
+VOLUME ["/var/lib/snipeit","/var/spool/snipeitassets"]
+
+RUN chown -R www-data:www-data /var/www/html /var/lib/snipeit /var/spool/snipeitassets
 
 ############ INITIAL APPLICATION SETUP #####################
-
 WORKDIR /var/www/html
+
+ENTRYPOINT ["./entrypoint_snipe.sh"]
 USER www-data
 RUN git clone -b master https://github.com/snipe/snipe-it ./
 # Get dependencies
 RUN composer install && rm -rf ~/.composer/cache
-
-############### DATA VOLUME #################
-
-VOLUME ["/var/lib/snipeit"]
+# Put entry point to execute
+COPY entrypoint.sh entrypoint_snipe.sh
 
 
