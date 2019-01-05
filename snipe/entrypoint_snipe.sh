@@ -1,6 +1,15 @@
 #!/bin/sh
 
-# create data directories
+# fix key if needed
+if [ -z "$APP_KEY" ]
+then
+  echo "Please re-run this container with an environment variable \$APP_KEY"
+  echo "An example APP_KEY you could use is: "
+  php artisan key:generate --show
+  exit -1
+fi
+
+
 for dir in \
   'data/private_uploads' \
   'data/uploads/accessories' \
@@ -29,13 +38,4 @@ then
   cp -a /var/www/html/vendor/laravel/passport/database/migrations/* /var/www/html/database/migrations/
 fi
 
-ASSETDIR=/var/spool/snipeitassets
-if [ -d "$ASSETDIR" ]
-then
-  echo Copy assets from /var/www/html/public
-  chown -R www-data:www-data "$ASSETDIR"
-  rm -rf "$ASSETDIR/*"
-  cp -a /var/www/html/public/* "$ASSETDIR"
-fi
-
-
+exec $@

@@ -6,6 +6,8 @@ services:
 #      - 80:80
 #    env_file:
 #      - snipe.env
+    ports:
+      - 81:80
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=snipedb
@@ -27,8 +29,6 @@ services:
       - MAIL_ENV_PASSWORD=your_email_password 
 #    links: 
 #      - snipedb:snipedb
-    volumes:
-      - local-snipeassets:/var/spool/snipeitassets/
   snipedb:
     image: mysql:5
     environment:
@@ -39,16 +39,3 @@ services:
     command: --sql_mode=""
 ##    volumes:
 ##      - /mysql/dumps/dir:/docker-entrypoint-initdb.d
-  nginx:
-    image: nginx:latest
-    volumes:
-      - ./snipe/nginx_server.conf:/etc/nginx/conf.d/server.conf:ro
-      - local-snipeassets:/var/spool/snipeitassets/
-    links:
-      - snipe:snipe
-    ports:
-      - 81:81
-volumes:
-  local-snipeassets:
-    #nothing to configure, this is temporary
-

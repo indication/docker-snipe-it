@@ -3,7 +3,8 @@ FROM php:7-fpm-alpine
 MAINTAINER in_dow <in_dow [at] hotmail.com>
 
 RUN apk add -U --no-cache mysql-client vim patch git gd \
-    openldap libzip freetype libpng libjpeg-turbo
+    openldap libzip freetype libpng libjpeg-turbo \
+    h2o supervisor
 
 RUN set -ex \
     && apk add -U --no-cache --virtual .php-buildapps gcc make perl autoconf file g++ \
@@ -14,33 +15,39 @@ RUN set -ex \
     && docker-php-ext-install -j$(nproc) iconv \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-configure ldap \
+    && docker-php-ext-install -j$(nproc) ldap \
     && apk del --purge .php-buildapps
 
-#    && docker-php-ext-configure -j$(nproc) ldap --with-libdir=lib/x86_64-linux-gnu/ \
-#    && docker-php-ext-install -j$(nproc) ldap
 
 ############## DEPENDENCIES via COMPOSER ###################
 #global install of composer
 RUN cd /tmp;curl -sS https://getcomposer.org/installer | php;mv /tmp/composer.phar /usr/local/bin/composer
 
-#www-data www-data
-RUN chown -R www-data:www-data /var/www/html
-
 ############### DATA VOLUME #################
-VOLUME ["/var/lib/snipeit","/var/spool/snipeitassets"]
+VOLUME ["/var/lib/snipeit"]
 
 ############ INITIAL APPLICATION SETUP #####################
 WORKDIR /var/www/html
-
-# Put entry point to execute
-COPY entrypoint.sh /var/www/entrypoint_snipe.sh
-COPY entrypoint_root.sh /var/www/entrypoint_root.sh
-RUN chmod ug+s /var/www/entrypoint_root.sh
-
-ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
+RUN chown -R www-data:www-data /var/www/html
 USER www-data
 RUN git clone --depth 1 -b master https://github.com/snipe/snipe-it ./
 # Get dependencies
 RUN composer global require hirak/prestissimo && composer install && rm -rf ~/.composer/cache
 
 
+############ SERVER SETUP #####################
+USER root
+COPY supervisord.conf h2o.conf /etc/
+RUN cd /etc;chmod 644 supervisord.conf h2o.conf
+COPY zzz-www.conf /usr/local/etc/php-fpm.d/
+RUN mkdir -p /var/run/php-fpm && chown www-data:www-data /var/run/php-fpm
+
+# Put entry point to execute
+COPY entrypoint_snipe.sh /var/www/
+RUN cd /var/www;chmod +x entrypoint_snipe.sh
+
+ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
+
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+EXPOSE 80
