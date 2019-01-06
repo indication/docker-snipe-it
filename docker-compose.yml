@@ -2,25 +2,22 @@ version: '2'
 services:
   snipe:
     build: ./snipe
-#    ports: 
-#      - 80:80
-#    env_file:
-#      - snipe.env
     ports:
-      - 81:80
+      - 80:80
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=snipedb
       - DB_DATABASE=snipe
       - DB_USERNAME=snipe
       - DB_PASSWORD=snipeuserpass
-      - APP_URL=http://192.168.10.14:81
+      #- APP_URL=http://192.168.10.14:81
       - APP_ENV=production
       #- APP_DEBUG=true
       #- APP_TIMEZONE=US/Pacific
       #- APP_LOCALE=en
       - APP_LOG=errorlog
-      - APP_KEY=base64:0xfB8skp2HE4m7S4vFPTY3/zeP6BNLq/ZaetQDC28VI=
+      # RECOMMEND: rewrite below after run
+      #- APP_KEY=base64:0xfB8skp2HE4m7S4vFPTY3/zeP6BNLq/ZaetQDC28VI=
       - MAIL_PORT_587_TCP_ADDR=smtp.whatever.com
       - MAIL_PORT_587_TCP_PORT=587
       - MAIL_ENV_FROM_ADDR=youremail@yourdomain.com
@@ -28,9 +25,8 @@ services:
       - MAIL_ENV_ENCRYPTION=tcp
       - MAIL_ENV_USERNAME=your_email_username
       - MAIL_ENV_PASSWORD=your_email_password 
-#    links: 
-#      - snipedb:snipedb
   snipedb:
+    # snipe-it only supports 5.x
     image: mysql:5
     environment:
       - MYSQL_ROOT_PASSWORD=rootpass
@@ -38,5 +34,6 @@ services:
       - MYSQL_USER=snipe
       - MYSQL_PASSWORD=snipeuserpass
     command: --sql_mode=""
-##    volumes:
-##      - /mysql/dumps/dir:/docker-entrypoint-initdb.d
+#    volumes:
+#      - /mysql/dumps/dir:/docker-entrypoint-initdb.d
+
