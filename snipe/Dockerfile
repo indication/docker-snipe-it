@@ -31,13 +31,26 @@ VOLUME ["/var/lib/snipeit"]
 WORKDIR /var/www/html
 RUN chown -R www-data:www-data /var/www/html
 USER www-data
-RUN git clone --depth 1 -b master https://github.com/snipe/snipe-it ./
+#RUN git clone --depth 1 -b master https://github.com/snipe/snipe-it ./
+RUN git clone --depth 1 -b v4.6.7 https://github.com/snipe/snipe-it ./
 # Get dependencies
 RUN composer global require hirak/prestissimo && composer install && rm -rf ~/.composer/cache
 
+#copy all configuration files
+# COPY docker/*.php /var/www/html/app/config/production/
+RUN cp -a docker/docker.env /var/www/html/.env
 
 ############ SERVER SETUP #####################
 USER root
+
+RUN \
+        rm -r "/var/www/html/storage/private_uploads" && ln -fs "/var/lib/snipeit/data/private_uploads" "/var/www/html/storage/private_uploads" \
+      && rm -rf "/var/www/html/public/uploads" && ln -fs "/var/lib/snipeit/data/uploads" "/var/www/html/public/uploads" \
+      && rm -r "/var/www/html/storage/app/backups" && ln -fs "/var/lib/snipeit/dumps" "/var/www/html/storage/app/backups" \
+      && mkdir "/var/lib/snipeit/keys" && ln -fs "/var/lib/snipeit/keys/oauth-private.key" "/var/www/html/storage/oauth-private.key" \
+      && ln -fs "/var/lib/snipeit/keys/oauth-public.key" "/var/www/html/storage/oauth-public.key" \
+      && chown www-data:www-data "/var/lib/snipeit/keys/"
+
 COPY supervisord.conf h2o.conf /etc/
 RUN cd /etc;chmod 644 supervisord.conf h2o.conf
 COPY zzz-www.conf /usr/local/etc/php-fpm.d/

@@ -19,6 +19,7 @@ services:
       #- APP_DEBUG=true
       #- APP_TIMEZONE=US/Pacific
       #- APP_LOCALE=en
+      - APP_LOG=errorlog
       - APP_KEY=base64:0xfB8skp2HE4m7S4vFPTY3/zeP6BNLq/ZaetQDC28VI=
       - MAIL_PORT_587_TCP_ADDR=smtp.whatever.com
       - MAIL_PORT_587_TCP_PORT=587
