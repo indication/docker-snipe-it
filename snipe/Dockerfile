@@ -72,5 +72,9 @@ COPY entrypoint_snipe.sh /var/www/
 RUN cd /var/www;chmod +x entrypoint_snipe.sh
 ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
 
+ENV APP_URL http://local/snipeit
+ENV APP_ENV production
+ENV APP_LOG errorlog
+
 # Startup supervisor
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
