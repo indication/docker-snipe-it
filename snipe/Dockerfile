@@ -46,6 +46,8 @@ RUN composer global require hirak/prestissimo && composer install && rm -rf ~/.c
 # Copy all configuration files
 # RUN cp -a docker/*.php /var/www/html/app/config/production/
 RUN cp -a docker/docker.env /var/www/html/.env
+# Add alias to /snipeit
+RUN ln -s . /var/www/html/public/snipeit
 
 ####################### SERVER SETUP #######################
 USER root

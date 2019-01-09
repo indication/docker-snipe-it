@@ -26,4 +26,5 @@ Current version
 |-------|-------|-------|
 |Snipe-IT|v4.6.7|from github|
 |PHP|php:7.2-fpm-alpine|Minor version is not specified|
+|H2O|-|alpine linux provided|
 |MySQL|5|Minor version is not specified|
