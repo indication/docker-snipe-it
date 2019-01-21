@@ -4,7 +4,7 @@ MAINTAINER in_dow <in_dow [at] hotmail.com>
 
 ################### SETUP PACKAGES  ########################
 # Install recommend packages
-RUN apk add -U --no-cache mysql-client vim patch git gd \
+RUN apk add -U --no-cache mysql-client git gd \
     openldap libzip freetype libpng libjpeg-turbo \
     h2o supervisor
 
@@ -12,7 +12,7 @@ RUN apk add -U --no-cache mysql-client vim patch git gd \
 RUN set -ex \
     && apk add -U --no-cache --virtual .php-buildapps gcc make perl autoconf file g++ \
         openldap-dev libzip-dev libxml2-dev freetype-dev libpng-dev libjpeg-turbo-dev \
-        dpkg-dev dpkg re2c \
+        dpkg-dev dpkg re2c patch \
     && docker-php-ext-install -j$(nproc) mysqli pdo_mysql \
     && docker-php-ext-install -j$(nproc) mbstring tokenizer fileinfo bcmath xml zip \
     && docker-php-ext-install -j$(nproc) iconv \
@@ -38,22 +38,27 @@ EXPOSE 80
 WORKDIR /var/www/html
 RUN chown -R www-data:www-data /var/www/html
 USER www-data
-RUN git clone --depth 1 -b v4.6.7 https://github.com/snipe/snipe-it ./
-
-# Get dependencies
-RUN composer global require hirak/prestissimo && composer install && rm -rf ~/.composer/cache
-
-# Copy all configuration files
-# RUN cp -a docker/*.php /var/www/html/app/config/production/
-RUN cp -a docker/docker.env /var/www/html/.env
-# Add alias to /snipeit
-RUN ln -s . /var/www/html/public/snipeit
+ENV SNIPEIT_VERSION v4.6.7
+ENV SNIPEIT_MD5SUM 8023719ebac3f34677113c612a99371f
+# Clone and dependencies
+# Copy all configuration files and add alias(ln) to /snipeit
+RUN set -ex \
+    && curl -o /tmp/snipe.tar.gz -sSL https://github.com/snipe/snipe-it/archive/$SNIPEIT_VERSION.tar.gz \
+    && md5sum /tmp/snipe.tar.gz \
+    && echo "$SNIPEIT_MD5SUM */tmp/snipe.tar.gz" | md5sum -c \
+    && tar -xzf /tmp/snipe.tar.gz --strip-components=1 \
+    && rm /tmp/snipe.tar.gz \
+    && composer global require hirak/prestissimo \
+    && composer install --no-dev --prefer-source \
+    && rm -rf ~/.composer/cache \
+    && cp -a docker/docker.env /var/www/html/.env \
+    && ln -s . /var/www/html/public/snipeit
 
 ####################### SERVER SETUP #######################
 USER root
 
 # Cleanup files and create symbolic links
-RUN \
+RUN set -ex \
         rm -r "/var/www/html/storage/private_uploads" && ln -fs "/var/lib/snipeit/data/private_uploads" "/var/www/html/storage/private_uploads" \
       && rm -rf "/var/www/html/public/uploads" && ln -fs "/var/lib/snipeit/data/uploads" "/var/www/html/public/uploads" \
       && rm -r "/var/www/html/storage/app/backups" && ln -fs "/var/lib/snipeit/dumps" "/var/www/html/storage/app/backups" \
@@ -61,15 +66,22 @@ RUN \
       && ln -fs "/var/lib/snipeit/keys/oauth-public.key" "/var/www/html/storage/oauth-public.key" \
       && chown www-data:www-data "/var/lib/snipeit/keys/"
 
-# Setup H2O and supervisor
-COPY supervisord.conf h2o.conf /etc/
-RUN cd /etc;chmod 644 supervisord.conf h2o.conf
-COPY zzz-www.conf /usr/local/etc/php-fpm.d/
-RUN mkdir -p /var/run/php-fpm && chown www-data:www-data /var/run/php-fpm
+# Setup H2O and supervisor and entrypoint
+COPY supervisord.conf \
+     h2o.conf \
+     zzz-www.conf \
+     entrypoint_snipe.sh \
+     /tmp/
+RUN set -ex \
+      && mv /tmp/supervisord.conf /tmp/h2o.conf /etc/ \
+      && chmod 644 /etc/supervisord.conf /etc/h2o.conf \
+      && mv /tmp/zzz-www.conf /usr/local/etc/php-fpm.d/ \
+      && mkdir -p /var/run/php-fpm \
+      && chown www-data:www-data /var/run/php-fpm \
+      && mv /tmp/entrypoint_snipe.sh /var/www/ \
+      && chmod +x /var/www/entrypoint_snipe.sh
 
 # Put entry point to execute
-COPY entrypoint_snipe.sh /var/www/
-RUN cd /var/www;chmod +x entrypoint_snipe.sh
 ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
 
 ENV APP_URL http://local/snipeit
