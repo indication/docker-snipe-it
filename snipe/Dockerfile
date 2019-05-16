@@ -45,7 +45,7 @@ ENV SNIPEIT_MD5SUM 8023719ebac3f34677113c612a99371f
 RUN set -ex \
     && curl -o /tmp/snipe.tar.gz -sSL https://github.com/snipe/snipe-it/archive/$SNIPEIT_VERSION.tar.gz \
     && md5sum /tmp/snipe.tar.gz \
-    && echo "$SNIPEIT_MD5SUM */tmp/snipe.tar.gz" | md5sum -c \
+    && (echo "$SNIPEIT_MD5SUM */tmp/snipe.tar.gz" | md5sum -c || (md5sum /tmp/snipe.tar.gz && exit 1)) \
     && tar -xzf /tmp/snipe.tar.gz --strip-components=1 \
     && rm /tmp/snipe.tar.gz \
     && composer global require hirak/prestissimo \
