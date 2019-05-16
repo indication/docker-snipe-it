@@ -52,6 +52,9 @@ RUN set -ex \
     && composer install --no-dev --prefer-source \
     && rm -rf ~/.composer/cache \
     && cp -a docker/docker.env /var/www/html/.env \
+    && (if [ ! -f "/var/www/html/snipeit/database/migrations/*create_oauth*" ] ; then \
+        cp -a /var/www/html/snipeit/vendor/laravel/passport/database/migrations/* /var/www/html/snipeit/database/migrations/ || echo skipped ; \
+       fi) \
     && ln -s . /var/www/html/public/snipeit
 
 ####################### SERVER SETUP #######################
@@ -87,6 +90,7 @@ ENTRYPOINT ["/var/www/entrypoint_snipe.sh"]
 ENV APP_URL http://local/snipeit
 ENV APP_ENV production
 ENV APP_LOG errorlog
+ENV DB_CONNECTION mysql
 
 # Startup supervisor
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
