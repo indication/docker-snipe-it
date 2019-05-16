@@ -38,8 +38,8 @@ EXPOSE 80
 WORKDIR /var/www/html
 RUN chown -R www-data:www-data /var/www/html
 USER www-data
-ENV SNIPEIT_VERSION v4.6.7
-ENV SNIPEIT_MD5SUM 8023719ebac3f34677113c612a99371f
+ENV SNIPEIT_VERSION v4.6.8
+ENV SNIPEIT_MD5SUM 8a8d2f06865460bc9fdebb7e72c6c635
 # Clone and dependencies
 # Copy all configuration files and add alias(ln) to /snipeit
 RUN set -ex \
